@@ -43,7 +43,7 @@ form.addEventListener("submit",async e=>{
  if(booked.has(date)){msg("Эта дата уже занята.","busy");render();return}
  submit.disabled=true;submit.textContent="Бронируем…";status("Проверяем дату и сохраняем запись…","info");
  try{
-   await api("/rest/v1/bookings",{method:"POST",headers:{"Content-Type":"application/json","Prefer":"return=representation"},body:JSON.stringify({name,booking_date:date,booking_time:"16:00",nail_length:length,design,removal,correction,comment,status:"confirmed"})});
+   await api("/rest/v1/bookings",{method:"POST",headers:{"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify({name,booking_date:date,booking_time:"16:00",nail_length:length,design,removal,correction,comment,status:"confirmed"})});
    booked.add(date);render();msg(`Дата ${fmt(date)} забронирована · 16:00`,"free");status("Готово! Дата закреплена. Открываем Telegram.","ok");
    const text=["Здравствуйте! Хочу записаться на маникюр 💗","",`Имя: ${name}`,`Дата: ${fmt(date)}`,"Время: 16:00",`Длина: ${length}`,`Дизайн: ${design}`,`Снятие: ${removal?"да":"нет"}`,`Коррекция: ${correction?"да":"нет"}`,`Комментарий: ${comment}`,"","Дата уже забронирована через сайт O.nails."].join("\n");
    window.open("https://t.me/olkadolka228?text="+encodeURIComponent(text),"_blank","noopener,noreferrer");
