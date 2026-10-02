@@ -46,9 +46,9 @@ form.addEventListener("submit",async e=>{
    await api("/rest/v1/bookings",{method:"POST",headers:{"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify({name,booking_date:date,booking_time:"16:00",nail_length:length,design,removal,correction,comment,status:"confirmed"})});
    booked.add(date);render();msg(`Дата ${fmt(date)} забронирована · 16:00`,"free");status("Готово! Дата закреплена. Открываем Telegram.","ok");
    const text=["Здравствуйте! Хочу записаться на маникюр 💗","",`Имя: ${name}`,`Дата: ${fmt(date)}`,"Время: 16:00",`Длина: ${length}`,`Дизайн: ${design}`,`Снятие: ${removal?"да":"нет"}`,`Коррекция: ${correction?"да":"нет"}`,`Комментарий: ${comment}`,"","Дата уже забронирована через сайт O.nails."].join("\n");
-   window.location.href = "tg://resolve?domain=olkadolka228&text=" + encodeURIComponent(text);
+   window.open("https://t.me"domain=olkadolka228&text"= + encodeURIComponent(text), "_blank");
 }
-  catch(err){
+  тоcatch(err){
    if(err.status===409){booked.add(date);dateInput.value="";render();msg("Эту дату только что забронировала другая клиентка. Выберите другую.","busy");status("Бронь не создана: дата уже занята.","err")}
    else status("Не получилось сохранить бронь. Проверьте Supabase.","err");
    console.error(err)
