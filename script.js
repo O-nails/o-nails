@@ -199,33 +199,33 @@ form.addEventListener("submit",async e=>{
 submit.textContent = "Бронируем…";
 status("Проверяем дату и сохраняем запись…", "info");
 
-try {
-  await api("/rest/v1/bookings", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Prefer": "return=minimal"
+try{
+  await api("/rest/v1/bookings",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Prefer":"return=minimal"
     },
-    body: JSON.stringify({
+    body:JSON.stringify({
       name,
-      booking_date: date,
-      booking_time: "16:00",
-      nail_length: length,
+      booking_date:date,
+      booking_time:"16:00",
+      nail_length:length,
       design,
       removal,
       correction,
       comment,
-      status: "confirmed"
+      status:"confirmed"
     })
   });
 
   booked.add(date);
   render();
 
-  msg(`Дата ${fmt(date)} забронирована · 16:00`, "free");
-  status("Готово! Дата закреплена. Открываем Telegram.", "ok");
+  msg(`Дата ${fmt(date)} забронирована · 16:00`,"free");
+  status("Готово! Дата закреплена. Открываем Telegram.","ok");
 
-  const text = [
+  const text=[
     "Здравствуйте! Хочу записаться на маникюр 💗",
     "",
     `Имя: ${name}`,
@@ -233,39 +233,33 @@ try {
     "Время: 16:00",
     `Длина: ${length}`,
     `Дизайн: ${design}`,
-    `Снятие: ${removal ? "да" : "нет"}`,
-    `Коррекция: ${correction ? "да" : "нет"}`,
+    `Снятие: ${removal?"да":"нет"}`,
+    `Коррекция: ${correction?"да":"нет"}`,
     `Комментарий: ${comment}`,
     "",
     "Дата уже забронирована через сайт O.nails."
   ].join("\n");
 
-  try {
+  try{
     await navigator.clipboard.writeText(text);
-  } catch (copyError) {
-    console.error("Не удалось скопировать сообщение:", copyError);
+  }catch(copyError){
+    console.error(copyError);
   }
 
   window.location.href = "https://t.me/olkadolka228";
 
-} catch (err) {
+}catch(err){
 
-  if (err.status === 409) {
+  if(err.status===409){
     booked.add(date);
-    dateInput.value = "";
+    dateInput.value="";
     render();
-
     msg(
       "Эту дату только что забронировала другая клиентка. Выберите другую.",
       "busy"
     );
-
-    status(
-      "Бронь не создана: дата уже занята.",
-      "err"
-    );
-
-  } else {
+    status("Бронь не создана: дата уже занята.","err");
+  }else{
     status(
       "Не получилось сохранить бронь. Проверьте Supabase.",
       "err"
@@ -274,10 +268,12 @@ try {
 
   console.error(err);
 
-} finally {
-
-  submit.disabled = false;
-  submit.textContent = "Забронировать дату и открыть Telegram ↗";
+}finally{
+  submit.disabled=false;
+  submit.textContent="Забронировать дату и открыть Telegram ↗";
 }
+
+});
+
 render();
 load();
