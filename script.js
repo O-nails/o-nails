@@ -292,9 +292,10 @@ form.addEventListener("submit", async e => {
       console.error(copyError);
     }
     
-window.location.href =
-  "https://t.me/olkadolka228?text=" +
-  encodeURIComponent(telegramText);
+
+const url = `https://t.me/olkadolka228?text=${encodeURIComponent(telegramText)}`;
+
+window.location.href = url;
     
   } catch (err) {
     if (err.status === 409) {
