@@ -1,58 +1,39 @@
-O.nails — НОРМАЛЬНОЕ БРОНИРОВАНИЕ
-=====================================
+# O.nails — запуск
 
-Готовые правила:
-• время строго 16:00;
-• суббота и воскресенье нельзя выбрать;
-• одна запись на одну дату;
-• после брони дата сразу занята для всех клиентов;
-• база данных защищает от двойной брони при одновременных кликах;
-• посетители видят только занятые даты, а не данные других клиентов;
-• после успешной брони открывается Telegram @olkadolka228.
+## Файлы
+- `index.html` — сайт
+- `script.js` — календарь и бронирование
+- `price-menu.jpg` — изображение прайса
+- `supabase.sql` — база данных и RPC для безопасной брони
 
-НАСТРОЙКА
+## 1. Supabase
+Откройте Supabase → **SQL Editor** → вставьте **весь** `supabase.sql` → **Run**.
 
-1. Создайте проект на https://supabase.com/
-2. Supabase → SQL Editor → New query.
-3. Скопируйте весь файл supabase.sql и нажмите Run.
-4. Supabase → Project Settings → API.
-5. Возьмите Project URL и anon/publishable key.
-6. Откройте index.html и в самом низу найдите:
+Скрипт создаёт таблицу `bookings`, календарь занятых дат и функцию `create_booking`, которая не позволяет двум клиентам забронировать одну дату.
 
-window.ONAILES_SUPABASE={
-  url:"PASTE_YOUR_SUPABASE_PROJECT_URL_HERE",
-  anonKey:"PASTE_YOUR_SUPABASE_ANON_KEY_HERE"
+## 2. Ключи
+В `index.html` внизу должны быть ваши Project URL и publishable/anon key:
+
+```js
+window.ONAILES_SUPABASE = {
+  url: "https://ВАШ-ПРОЕКТ.supabase.co",
+  anonKey: "ВАШ-PUBLISHABLE-KEY"
 };
+```
 
-Вставьте свои значения.
+`service_role` / secret key в сайт вставлять нельзя.
 
-НИКОГДА не вставляйте service_role/secret key в сайт.
+## 3. GitHub Pages
+Загрузите в корень репозитория все 4 файла:
+- `index.html`
+- `script.js`
+- `price-menu.jpg`
+- `supabase.sql`
 
-GITHUB PAGES
+После публикации откройте сайт заново с очисткой кэша. Скрипт подключается как `script.js?v=6`.
 
-Загрузите в репозиторий:
-index.html
-script.js
-assets/price-menu.jpg
-
-В GitHub:
-Settings → Pages → Deploy from a branch → main → / (root) → Save.
-
-ПРОВЕРКА
-
-• Сб/Вс в календаре серые и недоступны.
-• Время всегда 16:00 и не редактируется.
-• После записи дата становится занятой для всех.
-• Вторая попытка на ту же дату получает сообщение, что дата занята.
-• Supabase → Table Editor → bookings покажет запись.
-
-ОТМЕНА
-
-Чтобы освободить дату, откройте Supabase → Table Editor → bookings
-и поменяйте status у записи с confirmed на cancelled.
-
-ПОЧЕМУ ЭТО ДЕЙСТВИТЕЛЬНОЕ БРОНИРОВАНИЕ
-
-Календарь получает занятые даты из Supabase, а при сохранении база
-ставит уникальность на booking_date. Поэтому даже две клиентки,
-нажавшие кнопку почти одновременно, не смогут занять один день.
+## Правила брони
+- только Пн–Пт;
+- время всегда 16:00;
+- одна подтверждённая бронь на дату;
+- после успешной брони открывается Telegram `@olkadolka228` с заполненным сообщением.
