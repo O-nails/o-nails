@@ -1,5 +1,89 @@
-const CFG=window.ONAILES_SUPABASE||{},URL=CFG.url,KEY=CFG.anonKey;
-const form=document.getElementById("bookingForm"),calendar=document.getElementById("calendar"),dateInput=document.getElementById("date"),dateStatus=document.getElementById("dateStatus"),statusBox=document.getElementById("bookingStatus"),submit=document.getElementById("submitBtn");
+const CFG = window.ONAILES_SUPABASE || {};
+const URL = CFG.url;
+const KEY = CFG.anonKey;
+
+const form = document.getElementById("bookingForm");
+const calendar = document.getElementById("calendar");
+const dateInput = document.getElementById("date");
+const dateStatus = document.getElementById("dateStatus");
+const statusBox = document.getElementById("bookingStatus");
+const submit = document.getElementById("submitBtn");
+
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
+let view = new Date(today.getFullYear(), today.getMonth(), 1);
+let booked = new Set();
+let ready = false;
+
+const api = async (path, opt = {}) => {
+  const r = await fetch(URL + path, {
+    ...opt,
+    headers: {
+      apikey: KEY,
+      Authorization: "Bearer " + KEY,
+      ...(opt.headers || {})
+    }
+  });
+
+  const text = await r.text();
+
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {}
+
+  if (!r.ok) {
+    console.error("Supabase error:", r.status, data || text);
+
+    const error = new Error(
+      data?.message ||
+      data?.hint ||
+      data?.error_description ||
+      text ||
+      "Ошибка Supabase"
+    );
+
+    error.status = r.status;
+    throw error;
+  }
+
+  return data;
+};
+
+const cfg = () => {
+  return Boolean(URL && KEY);
+};
+
+const iso = d =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const fmt = v => {
+  const [y, m, d] = v.split("-");
+  return `${d}.${m}.${y}`;
+};
+
+const weekend = d => d.getDay() === 0 || d.getDay() === 6;
+const past = d => d < today;
+
+function msg(text, type = "") {
+  dateStatus.textContent = text;
+  dateStatus.className = "date-status " + type;
+}
+
+function status(text, type = "") {
+  statusBox.textContent = text;
+  statusBox.className = "status show " + type;
+}
+
+function monthName(d) {
+  return d
+    .toLocaleDateString("ru-RU", {
+      month: "long",
+      year: "numeric"
+    })
+    .replace(/^./, c => c.toUpperCase());
+}
 const today=new Date();today.setHours(0,0,0,0);let view=new Date(today.getFullYear(),today.getMonth(),1),booked=new Set(),ready=false;
 const api=async(path,opt={})=>{const r=await fetch(URL+path,{...opt,headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,...(opt.headers||{})}});const t=await r.text();let d=null;try{d=t?JSON.parse(t):null}catch{}if(!r.ok){const e=new Error(d?.message||d?.hint||"Ошибка сервера");e.status=r.status;throw e}return d};
 const cfg=()=>URL&&KEY&&!URL.includes("PASTE_YOUR")&&!KEY.includes("PASTE_YOUR");
@@ -24,12 +108,49 @@ function render(){
  calendar.querySelectorAll("[data-date]").forEach(b=>b.addEventListener("click",()=>select(b.dataset.date)));
 }
 function select(v){const d=new Date(v+"T00:00:00");if(!ready||weekend(d)||past(d)||booked.has(v))return;dateInput.value=v;render();msg("Выбрано: "+fmt(v)+" · 16:00","free")}
-async function load(){
- if(!cfg()){submit.disabled=true;msg("Подключите Supabase в index.html.","error");render();return}
- try{
-   const rows=await api("/rest/v1/booked_dates?select=booking_date&status=eq.confirmed");
-   booked=new Set((rows||[]).map(x=>x.booking_date));ready=true;submit.disabled=false;msg("Свободные будни загружены.","free");render()
- }catch(e){submit.disabled=true;msg("Не удалось загрузить календарь. Обновите страницу.","error");render();console.error(e)}
+async function load() {
+  render();
+
+  if (!cfg()) {
+    submit.disabled = true;
+    msg("Supabase не подключён.", "error");
+    return;
+  }
+
+  msg("Загрузка свободных дат…");
+
+  try {
+    const rows = await api(
+      "/rest/v1/booked_dates?select=booking_date&status=eq.confirmed"
+    );
+
+    console.log("Занятые даты:", rows);
+
+    booked = new Set(
+      (rows || []).map(row => row.booking_date)
+    );
+
+    ready = true;
+    submit.disabled = false;
+
+    msg("Свободные будни загружены.", "free");
+
+    render();
+
+  } catch (error) {
+    console.error("Не удалось загрузить даты из Supabase:", error);
+
+    ready = false;
+    submit.disabled = true;
+
+    msg(
+      "Ошибка загрузки календаря: " +
+      (error.message || "проверьте Supabase"),
+      "error"
+    );
+
+    render();
+  }
 }
 form.addEventListener("submit",async e=>{
  e.preventDefault();
