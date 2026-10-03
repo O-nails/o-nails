@@ -75,4 +75,5 @@ window.location.href = "https://t.me/olkadolka228";
    console.error(err)
  }finally{submit.disabled=false;submit.textContent="Забронировать дату и открыть Telegram ↗"}
 });
-render();load();
+render();
+load();
