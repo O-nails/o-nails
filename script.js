@@ -111,23 +111,56 @@ function select(v){const d=new Date(v+"T00:00:00");if(!ready||weekend(d)||past(d
 async function load() {
   render();
 
-  if (!cfg()) {
-    submit.disabled = true;
-    msg("Supabase не подключён.", "error");
+  console.log("1. load() запущен");
+  console.log("URL:", URL);
+  console.log("KEY есть:", !!KEY);
+
+  if (!URL || !KEY) {
+    msg("Нет подключения к Supabase.", "error");
     return;
   }
 
-  msg("Загрузка свободных дат…");
+  msg("Проверяем Supabase…", "info");
 
   try {
-    const rows = await api(
-      "/rest/v1/booked_dates?select=booking_date&status=eq.confirmed"
+    const response = await fetch(
+      URL + "/rest/v1/booked_dates?select=booking_date,status",
+      {
+        method: "GET",
+        headers: {
+          "apikey": KEY,
+          "Authorization": "Bearer " + KEY,
+          "Content-Type": "application/json"
+        }
+      }
     );
 
-    console.log("Занятые даты:", rows);
+    console.log("2. HTTP статус:", response.status);
+
+    const text = await response.text();
+
+    console.log("3. Ответ Supabase:", text);
+
+    if (!response.ok) {
+      throw new Error(
+        "Supabase HTTP " + response.status + ": " + text
+      );
+    }
+
+    let rows = [];
+
+    try {
+      rows = text ? JSON.parse(text) : [];
+    } catch {
+      throw new Error("Supabase вернул не JSON: " + text);
+    }
+
+    console.log("4. Получены даты:", rows);
 
     booked = new Set(
-      (rows || []).map(row => row.booking_date)
+      rows
+        .filter(row => row.status === "confirmed")
+        .map(row => row.booking_date)
     );
 
     ready = true;
@@ -138,14 +171,14 @@ async function load() {
     render();
 
   } catch (error) {
-    console.error("Не удалось загрузить даты из Supabase:", error);
+
+    console.error("ОШИБКА КАЛЕНДАРЯ:", error);
 
     ready = false;
     submit.disabled = true;
 
     msg(
-      "Ошибка загрузки календаря: " +
-      (error.message || "проверьте Supabase"),
+      "Ошибка Supabase: " + error.message,
       "error"
     );
 
