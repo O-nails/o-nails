@@ -272,8 +272,5 @@ try{
   submit.disabled=false;
   submit.textContent="Забронировать дату и открыть Telegram ↗";
 }
-
-});
-
 render();
 load();
