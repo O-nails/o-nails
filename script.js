@@ -8,6 +8,9 @@ const dateInput = document.getElementById("date");
 const dateStatus = document.getElementById("dateStatus");
 const statusBox = document.getElementById("bookingStatus");
 const submit = document.getElementById("submitBtn");
+const summaryDate = document.getElementById("summaryDate");
+const summaryLength = document.getElementById("summaryLength");
+const nameInput = document.getElementById("name");
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -16,216 +19,200 @@ let view = new Date(today.getFullYear(), today.getMonth(), 1);
 let booked = new Set();
 let ready = false;
 
-const api = async (path, opt = {}) => {
-  const r = await fetch(URL + path, {
-    ...opt,
+const prices = {
+  "1–2": "1 300 ₽",
+  "3–5": "1 500 ₽",
+  "6–7": "1 700 ₽",
+  "8+": "2 000 ₽"
+};
+
+function isConfigured() {
+  return Boolean(URL && KEY && !URL.includes("PASTE_YOUR") && !KEY.includes("PASTE_YOUR"));
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(URL + path, {
+    ...options,
     headers: {
       apikey: KEY,
       Authorization: "Bearer " + KEY,
-      ...(opt.headers || {})
+      ...(options.headers || {})
     }
   });
 
-  const text = await r.text();
-
+  const text = await response.text();
   let data = null;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {}
+  try { data = text ? JSON.parse(text) : null; } catch {}
 
-  if (!r.ok) {
-    console.error("Supabase error:", r.status, data || text);
-
+  if (!response.ok) {
     const error = new Error(
-      data?.message ||
-      data?.hint ||
-      data?.error_description ||
-      text ||
-      "Ошибка Supabase"
+      data?.message || data?.hint || data?.error_description || text || "Ошибка Supabase"
     );
-
-    error.status = r.status;
+    error.status = response.status;
     throw error;
   }
 
   return data;
-};
+}
 
-const cfg = () => {
-  return Boolean(URL && KEY);
-};
+function iso(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
 
-const iso = d =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-const fmt = v => {
-  const [y, m, d] = v.split("-");
+function fmt(value) {
+  const [y, m, d] = value.split("-");
   return `${d}.${m}.${y}`;
-};
+}
 
-const weekend = d => d.getDay() === 0 || d.getDay() === 6;
-const past = d => d < today;
+function isWeekend(date) {
+  return date.getDay() === 0 || date.getDay() === 6;
+}
 
-function msg(text, type = "") {
+function isPast(date) {
+  return date < today;
+}
+
+function setDateMessage(text, type = "") {
   dateStatus.textContent = text;
   dateStatus.className = "date-status " + type;
 }
 
-function status(text, type = "") {
+function setStatus(text, type = "") {
   statusBox.textContent = text;
   statusBox.className = "status show " + type;
 }
 
-function monthName(d) {
-  return d
-    .toLocaleDateString("ru-RU", {
-      month: "long",
-      year: "numeric"
-    })
-    .replace(/^./, c => c.toUpperCase());
+function monthName(date) {
+  return date.toLocaleDateString("ru-RU", { month: "long", year: "numeric" })
+    .replace(/^./, char => char.toUpperCase());
 }
-const today=new Date();today.setHours(0,0,0,0);let view=new Date(today.getFullYear(),today.getMonth(),1),booked=new Set(),ready=false;
-const api=async(path,opt={})=>{const r=await fetch(URL+path,{...opt,headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,...(opt.headers||{})}});const t=await r.text();let d=null;try{d=t?JSON.parse(t):null}catch{}if(!r.ok){const e=new Error(d?.message||d?.hint||"Ошибка сервера");e.status=r.status;throw e}return d};
-const cfg=()=>URL&&KEY&&!URL.includes("PASTE_YOUR")&&!KEY.includes("PASTE_YOUR");
-const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-const fmt=v=>{const [y,m,d]=v.split("-");return `${d}.${m}.${y}`};
-const weekend=d=>d.getDay()===0||d.getDay()===6, past=d=>d<today;
-function msg(t,k=""){dateStatus.textContent=t;dateStatus.className="date-status "+k}
-function status(t,k=""){statusBox.textContent=t;statusBox.className="status show "+k}
-function monthName(d){return d.toLocaleDateString("ru-RU",{month:"long",year:"numeric"}).replace(/^./,c=>c.toUpperCase())}
 
-function render(){
- const y=view.getFullYear(),m=view.getMonth(),first=new Date(y,m,1),off=(first.getDay()+6)%7,days=new Date(y,m+1,0).getDate(),minMonth=new Date(today.getFullYear(),today.getMonth(),1),canPrev=view>minMonth;
- let s=`<div class="calhead"><strong>${monthName(view)}</strong><div class="calnav"><button type="button" id="prev" ${canPrev?"":"disabled"}>‹</button><button type="button" id="next">›</button></div></div><div class="week"><div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div></div><div class="days">`;
- for(let i=0;i<off;i++)s+='<button class="day mutedday" type="button" tabindex="-1"></button>';
- for(let day=1;day<=days;day++){
-   const d=new Date(y,m,day),v=iso(d),w=weekend(d),p=past(d),b=booked.has(v),sel=dateInput.value===v,dis=!ready||w||p||b;
-   s+=`<button class="day ${w?"weekend ":""}${b?"booked ":""}${sel?"selected":""}" type="button" data-date="${v}" ${dis?"disabled":""}>${day}</button>`;
- }
- calendar.innerHTML=s+"</div>";
- calendar.querySelector("#prev")?.addEventListener("click",()=>{if(canPrev){view=new Date(y,m-1,1);render()}});
- calendar.querySelector("#next")?.addEventListener("click",()=>{view=new Date(y,m+1,1);render()});
- calendar.querySelectorAll("[data-date]").forEach(b=>b.addEventListener("click",()=>select(b.dataset.date)));
+function updateSummary() {
+  summaryDate.textContent = dateInput.value ? `${fmt(dateInput.value)} · 16:00` : "не выбрана";
+  const selected = document.querySelector('input[name="length"]:checked')?.value;
+  summaryLength.textContent = selected ? `${selected} · ${prices[selected]}` : "не выбрана";
 }
-function select(v){const d=new Date(v+"T00:00:00");if(!ready||weekend(d)||past(d)||booked.has(v))return;dateInput.value=v;render();msg("Выбрано: "+fmt(v)+" · 16:00","free")}
-async function load() {
-  render();
 
-  console.log("1. load() запущен");
-  console.log("URL:", URL);
-  console.log("KEY есть:", !!KEY);
+function selectLength(value, shouldScroll = false) {
+  const input = document.querySelector(`input[name="length"][value="${CSS.escape(value)}"]`);
+  if (!input) return;
+  input.checked = true;
+  updateSummary();
+  if (shouldScroll) {
+    document.getElementById("booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
 
-  if (!URL || !KEY) {
-    msg("Нет подключения к Supabase.", "error");
+function renderCalendar() {
+  const year = view.getFullYear();
+  const month = view.getMonth();
+  const first = new Date(year, month, 1);
+  const offset = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const minMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const canPrev = view > minMonth;
+
+  let html = `
+    <div class="cal-top">
+      <div class="cal-title">${monthName(view)}</div>
+      <div class="cal-nav">
+        <button type="button" id="prevMonth" ${canPrev ? "" : "disabled"} aria-label="Предыдущий месяц">‹</button>
+        <button type="button" id="nextMonth" aria-label="Следующий месяц">›</button>
+      </div>
+    </div>
+    <div class="week"><div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div></div>
+    <div class="days">`;
+
+  for (let i = 0; i < offset; i++) {
+    html += '<button class="day mutedday" type="button" tabindex="-1" aria-hidden="true"></button>';
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    const value = iso(date);
+    const weekend = isWeekend(date);
+    const past = isPast(date);
+    const busy = booked.has(value);
+    const selected = dateInput.value === value;
+    const disabled = !ready || weekend || past || busy;
+
+    const classes = [
+      "day",
+      weekend ? "weekend" : "",
+      busy ? "booked" : "",
+      selected ? "selected" : ""
+    ].filter(Boolean).join(" ");
+
+    let label = `${day}`;
+    if (busy) label += " — занято";
+    else if (weekend) label += " — выходной";
+    else if (past) label += " — прошедшая дата";
+
+    html += `<button class="${classes}" type="button" data-date="${value}" ${disabled ? "disabled" : ""} aria-label="${label}">${day}</button>`;
+  }
+
+  html += "</div>";
+  calendar.innerHTML = html;
+
+  calendar.querySelector("#prevMonth")?.addEventListener("click", () => {
+    if (!canPrev) return;
+    view = new Date(year, month - 1, 1);
+    renderCalendar();
+  });
+
+  calendar.querySelector("#nextMonth")?.addEventListener("click", () => {
+    view = new Date(year, month + 1, 1);
+    renderCalendar();
+  });
+
+  calendar.querySelectorAll("[data-date]").forEach(button => {
+    button.addEventListener("click", () => selectDate(button.dataset.date));
+  });
+}
+
+function selectDate(value) {
+  const date = new Date(value + "T00:00:00");
+  if (!ready || isWeekend(date) || isPast(date) || booked.has(value)) return;
+
+  dateInput.value = value;
+  renderCalendar();
+  updateSummary();
+  setDateMessage(`Выбрано: ${fmt(value)} · 16:00`, "free");
+  setStatus("", "");
+}
+
+async function loadBookings() {
+  renderCalendar();
+
+  if (!isConfigured()) {
+    setDateMessage("Нет подключения к Supabase.", "error");
     return;
   }
 
-  msg("Проверяем Supabase…", "info");
+  setDateMessage("Проверяем свободные даты…", "info");
 
   try {
-    const response = await fetch(
-      URL + "/rest/v1/booked_dates?select=booking_date,status",
-      {
-        method: "GET",
-        headers: {
-          "apikey": KEY,
-          "Authorization": "Bearer " + KEY,
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    console.log("2. HTTP статус:", response.status);
-
-    const text = await response.text();
-
-    console.log("3. Ответ Supabase:", text);
-
-    if (!response.ok) {
-      throw new Error(
-        "Supabase HTTP " + response.status + ": " + text
-      );
-    }
-
-    let rows = [];
-
-    try {
-      rows = text ? JSON.parse(text) : [];
-    } catch {
-      throw new Error("Supabase вернул не JSON: " + text);
-    }
-
-    console.log("4. Получены даты:", rows);
-
+    const rows = await api("/rest/v1/booked_dates?select=booking_date,status");
     booked = new Set(
-      rows
+      (rows || [])
         .filter(row => row.status === "confirmed")
         .map(row => row.booking_date)
     );
-
     ready = true;
     submit.disabled = false;
-
-    msg("Свободные будни загружены.", "free");
-
-    render();
-
+    setDateMessage("Свободные будни загружены.", "free");
+    renderCalendar();
   } catch (error) {
-
     console.error("ОШИБКА КАЛЕНДАРЯ:", error);
-
     ready = false;
     submit.disabled = true;
-
-    msg(
-      "Ошибка Supabase: " + error.message,
-      "error"
-    );
-
-    render();
+    setDateMessage("Не удалось загрузить свободные даты. Проверьте подключение Supabase.", "error");
+    renderCalendar();
   }
 }
-form.addEventListener("submit",async e=>{
- e.preventDefault();
- if(!ready){status("Система бронирования не подключена.","err");return}
- const name=document.getElementById("name").value.trim(),date=dateInput.value,length=document.querySelector('input[name="length"]:checked')?.value;
- const design=document.getElementById("design").value.trim()||"пришлю фото / обсудим";
- const removal=document.getElementById("removal").checked,correction=document.getElementById("correction").checked;
- const comment=document.getElementById("comment").value.trim()||"нет";
- if(!date||!length){status("Выберите дату и длину ногтей.","err");return}
- const d=new Date(date+"T00:00:00");if(weekend(d)){msg("Суббота и воскресенье недоступны.","busy");return}
- if(booked.has(date)){msg("Эта дата уже занята.","busy");render();return}
- submit.disabled = true;
-submit.textContent = "Бронируем…";
-status("Проверяем дату и сохраняем запись…", "info");
 
-try{
-  await api("/rest/v1/bookings",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "Prefer":"return=minimal"
-    },
-    body:JSON.stringify({
-      name,
-      booking_date:date,
-      booking_time:"16:00",
-      nail_length:length,
-      design,
-      removal,
-      correction,
-      comment,
-      status:"confirmed"
-    })
-  });
-
-  booked.add(date);
-  render();
-
-  msg(`Дата ${fmt(date)} забронирована · 16:00`,"free");
-  status("Готово! Дата закреплена. Открываем Telegram.","ok");
-
-  const text=[
+function buildTelegramText({ name, date, length, design, removal, correction, comment }) {
+  return [
     "Здравствуйте! Хочу записаться на маникюр 💗",
     "",
     `Имя: ${name}`,
@@ -233,44 +220,144 @@ try{
     "Время: 16:00",
     `Длина: ${length}`,
     `Дизайн: ${design}`,
-    `Снятие: ${removal?"да":"нет"}`,
-    `Коррекция: ${correction?"да":"нет"}`,
+    `Снятие: ${removal ? "да" : "нет"}`,
+    `Коррекция: ${correction ? "да" : "нет"}`,
     `Комментарий: ${comment}`,
     "",
     "Дата уже забронирована через сайт O.nails."
   ].join("\n");
-
-  try{
-    await navigator.clipboard.writeText(text);
-  }catch(copyError){
-    console.error(copyError);
-  }
-
-  window.location.href = "https://t.me/olkadolka228";
-
-}catch(err){
-
-  if(err.status===409){
-    booked.add(date);
-    dateInput.value="";
-    render();
-    msg(
-      "Эту дату только что забронировала другая клиентка. Выберите другую.",
-      "busy"
-    );
-    status("Бронь не создана: дата уже занята.","err");
-  }else{
-    status(
-      "Не получилось сохранить бронь. Проверьте Supabase.",
-      "err"
-    );
-  }
-
-  console.error(err);
-
-}finally{
-  submit.disabled=false;
-  submit.textContent="Забронировать дату и открыть Telegram ↗";
 }
-render();
-load();
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!ready) {
+    setStatus("Система бронирования пока не подключена.", "err");
+    return;
+  }
+
+  const name = nameInput.value.trim();
+  const date = dateInput.value;
+  const length = document.querySelector('input[name="length"]:checked')?.value;
+  const design = document.getElementById("design").value.trim() || "пришлю фото / обсудим";
+  const removal = document.getElementById("removal").checked;
+  const correction = document.getElementById("correction").checked;
+  const comment = document.getElementById("comment").value.trim() || "нет";
+
+  if (!name) {
+    setStatus("Введите имя.", "err");
+    nameInput.focus();
+    return;
+  }
+
+  if (!date || !length) {
+    setStatus("Выберите дату и длину ногтей.", "err");
+    return;
+  }
+
+  const dateObject = new Date(date + "T00:00:00");
+
+  if (isWeekend(dateObject)) {
+    setDateMessage("Суббота и воскресенье недоступны.", "busy");
+    return;
+  }
+
+  if (booked.has(date)) {
+    setDateMessage("Эта дата уже занята.", "busy");
+    renderCalendar();
+    return;
+  }
+
+  submit.disabled = true;
+  submit.textContent = "Бронируем…";
+  setStatus("Проверяем дату и сохраняем запись…", "info");
+
+  try {
+    await api("/rest/v1/bookings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+      },
+      body: JSON.stringify({
+        name,
+        booking_date: date,
+        booking_time: "16:00",
+        nail_length: length,
+        design,
+        removal,
+        correction,
+        comment,
+        status: "confirmed"
+      })
+    });
+
+    booked.add(date);
+    renderCalendar();
+    updateSummary();
+    setDateMessage(`Дата ${fmt(date)} забронирована · 16:00`, "free");
+    setStatus("Готово! Дата закреплена. Сейчас откроется Telegram.", "ok");
+
+    const telegramText = buildTelegramText({ name, date, length, design, removal, correction, comment });
+
+    // Telegram поддерживает deep-link вида t.me/<username>?text=...,
+    // благодаря которому текст сразу подставляется в поле сообщения.
+    const telegramUrl = new URL("https://t.me/olkadolka228");
+    telegramUrl.searchParams.set("text", telegramText);
+
+    // Открываем Telegram после успешной брони. На телефоне ссылка обычно
+    // передаётся приложению Telegram, на компьютере — Telegram Web/Desktop.
+    setTimeout(() => {
+      window.location.href = telegramUrl.toString();
+    }, 250);
+  } catch (error) {
+    console.error(error);
+
+    if (error.status === 409) {
+      booked.add(date);
+      dateInput.value = "";
+      renderCalendar();
+      updateSummary();
+      setDateMessage("Эту дату только что забронировала другая клиентка. Выберите другую.", "busy");
+      setStatus("Бронь не создана: дата уже занята.", "err");
+    } else {
+      setStatus("Не получилось сохранить бронь. Проверьте подключение Supabase.", "err");
+    }
+  } finally {
+    submit.disabled = !ready;
+    submit.textContent = "Забронировать дату и открыть Telegram ↗";
+  }
+});
+
+document.querySelectorAll("input[name=length]").forEach(input => {
+  input.addEventListener("change", updateSummary);
+});
+
+document.querySelectorAll(".price-action[data-length]").forEach(button => {
+  button.addEventListener("click", () => selectLength(button.dataset.length, true));
+});
+
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener("click", () => {
+    const targetId = anchor.getAttribute("href");
+    if (targetId === "#top") return;
+  });
+});
+
+if ("IntersectionObserver" in window) {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: .08 });
+
+  document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+} else {
+  document.querySelectorAll(".reveal").forEach(el => el.classList.add("is-visible"));
+}
+
+updateSummary();
+loadBookings();
