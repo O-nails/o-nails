@@ -273,7 +273,6 @@
       .shell{width:calc(100% - 20px)}
       .top-note{font-size:7px;padding:7px 8px;gap:8px;letter-spacing:.08em}
       .nav{min-height:69px}
-      .nav-cta{padding:11px 14px}
       .hero{padding:43px 0 68px}
       .hero h1{font-size:59px;line-height:.83}
       .hero-copy{font-size:12.5px;line-height:1.8}
@@ -296,8 +295,40 @@
       .tg-card h3{font-size:42px}
       .quote-card p{font-size:34px}
       .foot{align-items:flex-start;flex-direction:column}
-      .mobile-bar{position:fixed;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:55;padding:7px;border-radius:19px;background:rgba(45,25,33,.95);box-shadow:0 18px 40px rgba(0,0,0,.18);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
-      .mobile-bar a{min-width:0;text-align:center;padding:12px 4px;color:#fff;font-size:9px;font-weight:800;line-height:1.2;border-radius:12px;white-space:nowrap}
+      .mobile-bar{
+        position:fixed;
+        display:flex;
+        align-items:stretch;
+        left:10px;
+        right:10px;
+        bottom:calc(10px + env(safe-area-inset-bottom));
+        z-index:55;
+        padding:7px;
+        border-radius:19px;
+        background:rgba(45,25,33,.95);
+        box-shadow:0 18px 40px rgba(0,0,0,.18);
+        backdrop-filter:blur(16px);
+        -webkit-backdrop-filter:blur(16px);
+        overflow:hidden;
+      }
+      .mobile-bar a{
+        flex:1 1 0;
+        width:33.333333%;
+        min-width:0;
+        height:46px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        padding:0 4px;
+        margin:0;
+        color:#fff;
+        font-size:9px;
+        font-weight:800;
+        line-height:1.2;
+        border-radius:12px;
+        white-space:nowrap;
+      }
       .mobile-bar a:last-child{background:#fff;color:var(--rose)}
     }
   </style>
