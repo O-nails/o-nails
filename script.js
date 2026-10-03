@@ -8,9 +8,6 @@ const dateInput = document.getElementById("date");
 const dateStatus = document.getElementById("dateStatus");
 const statusBox = document.getElementById("bookingStatus");
 const submit = document.getElementById("submitBtn");
-const summaryDate = document.getElementById("summaryDate");
-const summaryLength = document.getElementById("summaryLength");
-const nameInput = document.getElementById("name");
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -18,13 +15,6 @@ today.setHours(0, 0, 0, 0);
 let view = new Date(today.getFullYear(), today.getMonth(), 1);
 let booked = new Set();
 let ready = false;
-
-const prices = {
-  "1–2": "1 300 ₽",
-  "3–5": "1 500 ₽",
-  "6–7": "1 700 ₽",
-  "8+": "2 000 ₽"
-};
 
 function isConfigured() {
   return Boolean(URL && KEY && !URL.includes("PASTE_YOUR") && !KEY.includes("PASTE_YOUR"));
@@ -87,22 +77,6 @@ function monthName(date) {
     .replace(/^./, char => char.toUpperCase());
 }
 
-function updateSummary() {
-  summaryDate.textContent = dateInput.value ? `${fmt(dateInput.value)} · 16:00` : "не выбрана";
-  const selected = document.querySelector('input[name="length"]:checked')?.value;
-  summaryLength.textContent = selected ? `${selected} · ${prices[selected]}` : "не выбрана";
-}
-
-function selectLength(value, shouldScroll = false) {
-  const input = document.querySelector(`input[name="length"][value="${CSS.escape(value)}"]`);
-  if (!input) return;
-  input.checked = true;
-  updateSummary();
-  if (shouldScroll) {
-    document.getElementById("booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-}
-
 function renderCalendar() {
   const year = view.getFullYear();
   const month = view.getMonth();
@@ -120,7 +94,9 @@ function renderCalendar() {
         <button type="button" id="nextMonth" aria-label="Следующий месяц">›</button>
       </div>
     </div>
-    <div class="week"><div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div></div>
+    <div class="week">
+      <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+    </div>
     <div class="days">`;
 
   for (let i = 0; i < offset; i++) {
@@ -176,7 +152,6 @@ function selectDate(value) {
 
   dateInput.value = value;
   renderCalendar();
-  updateSummary();
   setDateMessage(`Выбрано: ${fmt(value)} · 16:00`, "free");
   setStatus("", "");
 }
@@ -236,7 +211,7 @@ form.addEventListener("submit", async event => {
     return;
   }
 
-  const name = nameInput.value.trim();
+  const name = document.getElementById("name").value.trim();
   const date = dateInput.value;
   const length = document.querySelector('input[name="length"]:checked')?.value;
   const design = document.getElementById("design").value.trim() || "пришлю фото / обсудим";
@@ -246,7 +221,7 @@ form.addEventListener("submit", async event => {
 
   if (!name) {
     setStatus("Введите имя.", "err");
-    nameInput.focus();
+    document.getElementById("name").focus();
     return;
   }
 
@@ -294,22 +269,20 @@ form.addEventListener("submit", async event => {
 
     booked.add(date);
     renderCalendar();
-    updateSummary();
     setDateMessage(`Дата ${fmt(date)} забронирована · 16:00`, "free");
     setStatus("Готово! Дата закреплена. Сейчас откроется Telegram.", "ok");
 
     const telegramText = buildTelegramText({ name, date, length, design, removal, correction, comment });
 
-    // Telegram поддерживает deep-link вида t.me/<username>?text=...,
-    // благодаря которому текст сразу подставляется в поле сообщения.
-    const telegramUrl = new URL("https://t.me/olkadolka228");
-    telegramUrl.searchParams.set("text", telegramText);
+    try {
+      await navigator.clipboard.writeText(telegramText);
+    } catch (copyError) {
+      console.warn("Clipboard unavailable:", copyError);
+    }
 
-    // Открываем Telegram после успешной брони. На телефоне ссылка обычно
-    // передаётся приложению Telegram, на компьютере — Telegram Web/Desktop.
     setTimeout(() => {
-      window.location.href = telegramUrl.toString();
-    }, 250);
+      window.location.href = "https://t.me/olkadolka228";
+    }, 450);
   } catch (error) {
     console.error(error);
 
@@ -317,7 +290,6 @@ form.addEventListener("submit", async event => {
       booked.add(date);
       dateInput.value = "";
       renderCalendar();
-      updateSummary();
       setDateMessage("Эту дату только что забронировала другая клиентка. Выберите другую.", "busy");
       setStatus("Бронь не создана: дата уже занята.", "err");
     } else {
@@ -329,35 +301,4 @@ form.addEventListener("submit", async event => {
   }
 });
 
-document.querySelectorAll("input[name=length]").forEach(input => {
-  input.addEventListener("change", updateSummary);
-});
-
-document.querySelectorAll(".price-action[data-length]").forEach(button => {
-  button.addEventListener("click", () => selectLength(button.dataset.length, true));
-});
-
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener("click", () => {
-    const targetId = anchor.getAttribute("href");
-    if (targetId === "#top") return;
-  });
-});
-
-if ("IntersectionObserver" in window) {
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("is-visible");
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: .08 });
-
-  document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
-} else {
-  document.querySelectorAll(".reveal").forEach(el => el.classList.add("is-visible"));
-}
-
-updateSummary();
 loadBookings();
