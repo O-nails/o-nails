@@ -299,15 +299,17 @@ form.addEventListener("submit", async event => {
     setStatus("Готово! Дата закреплена. Сейчас откроется Telegram.", "ok");
 
     const telegramText = buildTelegramText({ name, date, length, design, removal, correction, comment });
-    try {
-      await navigator.clipboard.writeText(telegramText);
-    } catch (copyError) {
-      console.warn("Clipboard unavailable:", copyError);
-    }
 
+    // Telegram поддерживает deep-link вида t.me/<username>?text=...,
+    // благодаря которому текст сразу подставляется в поле сообщения.
+    const telegramUrl = new URL("https://t.me/olkadolka228");
+    telegramUrl.searchParams.set("text", telegramText);
+
+    // Открываем Telegram после успешной брони. На телефоне ссылка обычно
+    // передаётся приложению Telegram, на компьютере — Telegram Web/Desktop.
     setTimeout(() => {
-      window.location.href = "https://t.me/olkadolka228";
-    }, 450);
+      window.location.href = telegramUrl.toString();
+    }, 250);
   } catch (error) {
     console.error(error);
 
