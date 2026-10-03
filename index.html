@@ -296,8 +296,8 @@
       .tg-card h3{font-size:42px}
       .quote-card p{font-size:34px}
       .foot{align-items:flex-start;flex-direction:column}
-      .mobile-bar{position:fixed;display:flex;left:10px;right:10px;bottom:10px;z-index:55;padding:7px;border-radius:19px;background:rgba(45,25,33,.95);box-shadow:0 18px 40px rgba(0,0,0,.18);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
-      .mobile-bar a{flex:1;text-align:center;padding:12px 5px;color:#fff;font-size:9px;font-weight:800;border-radius:12px}
+      .mobile-bar{position:fixed;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:55;padding:7px;border-radius:19px;background:rgba(45,25,33,.95);box-shadow:0 18px 40px rgba(0,0,0,.18);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+      .mobile-bar a{min-width:0;text-align:center;padding:12px 4px;color:#fff;font-size:9px;font-weight:800;line-height:1.2;border-radius:12px;white-space:nowrap}
       .mobile-bar a:last-child{background:#fff;color:var(--rose)}
     }
   </style>
@@ -316,7 +316,6 @@
         <a href="#booking">Запись</a>
         <a href="#visit">Перед визитом</a>
       </nav>
-      <a class="nav-cta" href="#booking">Записаться ↗</a>
     </div>
   </header>
 
