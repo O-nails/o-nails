@@ -291,9 +291,11 @@ form.addEventListener("submit", async e => {
     } catch (copyError) {
       console.error(copyError);
     }
-
-    window.location.href = "https://t.me/olkadolka228";
-
+    
+window.location.href =
+  "https://t.me/olkadolka228?text=" +
+  encodeURIComponent(telegramText);
+    
   } catch (err) {
     if (err.status === 409) {
       booked.add(date);
