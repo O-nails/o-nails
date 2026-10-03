@@ -245,13 +245,20 @@
       setDateMessage(`Дата ${fmt(date)} забронирована · 16:00`, "free");
       setStatus("Готово! Бронь сохранена. Открываем Telegram…", "ok");
 
-      // Telegram deep link: on phones with Telegram installed this opens the app,
-      // and the `text` parameter is placed directly into the message composer.
-      // If the app is not installed, Telegram Web opens with the same prefilled text.
-      const telegramText = buildTelegramText({ name, date, length, design, removal, correction, comment });
-      const telegramUrl = new URL("https://t.me/olkadolka228");
-      telegramUrl.searchParams.set("text", telegramText);
-      window.location.assign(telegramUrl.toString());
+      const telegramText = buildTelegramText({
+  name,
+  date,
+  length,
+  design,
+  removal,
+  correction,
+  comment
+});
+
+const telegramUrl =
+  `https://t.me/olkadolka228?text=${encodeURIComponent(telegramText)}`;
+
+window.location.href = telegramUrl;
     } catch (error) {
       console.error("O.nails / Supabase booking error:", error);
       const msg = String(error.message || "");
