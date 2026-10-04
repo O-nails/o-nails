@@ -273,6 +273,7 @@
       .shell{width:calc(100% - 20px)}
       .top-note{font-size:7px;padding:7px 8px;gap:8px;letter-spacing:.08em}
       .nav{min-height:69px}
+      .nav-cta{padding:11px 14px}
       .hero{padding:43px 0 68px}
       .hero h1{font-size:59px;line-height:.83}
       .hero-copy{font-size:12.5px;line-height:1.8}
@@ -295,40 +296,8 @@
       .tg-card h3{font-size:42px}
       .quote-card p{font-size:34px}
       .foot{align-items:flex-start;flex-direction:column}
-      .mobile-bar{
-        position:fixed;
-        display:flex;
-        align-items:stretch;
-        left:10px;
-        right:10px;
-        bottom:calc(10px + env(safe-area-inset-bottom));
-        z-index:55;
-        padding:7px;
-        border-radius:19px;
-        background:rgba(45,25,33,.95);
-        box-shadow:0 18px 40px rgba(0,0,0,.18);
-        backdrop-filter:blur(16px);
-        -webkit-backdrop-filter:blur(16px);
-        overflow:hidden;
-      }
-      .mobile-bar a{
-        flex:1 1 0;
-        width:33.333333%;
-        min-width:0;
-        height:46px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        text-align:center;
-        padding:0 4px;
-        margin:0;
-        color:#fff;
-        font-size:9px;
-        font-weight:800;
-        line-height:1.2;
-        border-radius:12px;
-        white-space:nowrap;
-      }
+      .mobile-bar{position:fixed;display:flex;left:10px;right:10px;bottom:10px;z-index:55;padding:7px;border-radius:19px;background:rgba(45,25,33,.95);box-shadow:0 18px 40px rgba(0,0,0,.18);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+      .mobile-bar a{flex:1;text-align:center;padding:12px 5px;color:#fff;font-size:9px;font-weight:800;border-radius:12px}
       .mobile-bar a:last-child{background:#fff;color:var(--rose)}
     }
   </style>
@@ -347,6 +316,7 @@
         <a href="#booking">Запись</a>
         <a href="#visit">Перед визитом</a>
       </nav>
+      <a class="nav-cta" href="#booking">Записаться ↗</a>
     </div>
   </header>
 
@@ -422,6 +392,16 @@
             <div class="form-row">
               <div class="num">02</div>
               <div>
+                <label class="label" for="telegramUsername">Telegram username</label>
+                <input class="field" id="telegramUsername" name="telegramUsername" type="text" autocomplete="off" placeholder="@username">
+                <small class="date-status">Например: @olkadolka228</small>
+              </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="num">03</div>
+              <div>
                 <div class="label">Дата</div>
                 <input id="date" type="hidden" required>
                 <div class="calendar" id="calendar" aria-label="Календарь записи"></div>
@@ -430,7 +410,7 @@
             </div>
 
             <div class="form-row">
-              <div class="num">03</div>
+              <div class="num">04</div>
               <div>
                 <div class="label">Время</div>
                 <div class="timebox"><strong>16:00</strong><span>фиксированное время</span></div>
@@ -438,7 +418,7 @@
             </div>
 
             <div class="form-row">
-              <div class="num">04</div>
+              <div class="num">05</div>
               <div>
                 <div class="label">Длина ногтей</div>
                 <div class="length-grid">
@@ -451,7 +431,7 @@
             </div>
 
             <div class="form-row">
-              <div class="num">05</div>
+              <div class="num">06</div>
               <div>
                 <label class="label" for="design">Какой дизайн хотите?</label>
                 <textarea id="design" rows="3" placeholder="Опишите идею или напишите: «пришлю фото в Telegram»"></textarea>
@@ -459,7 +439,7 @@
             </div>
 
             <div class="form-row">
-              <div class="num">06</div>
+              <div class="num">07</div>
               <div>
                 <div class="label">Дополнительно</div>
                 <div class="check-grid">
@@ -470,7 +450,7 @@
             </div>
 
             <div class="form-row">
-              <div class="num">07</div>
+              <div class="num">08</div>
               <div>
                 <label class="label" for="comment">Пожелания</label>
                 <textarea id="comment" rows="3" placeholder="Например: ремонт одного ногтя или другие детали"></textarea>
@@ -484,7 +464,7 @@
             </div>
 
             <div id="bookingStatus" class="status" role="status" aria-live="polite"></div>
-            <button class="btn btn-primary submit" id="submitBtn" type="submit" disabled>Забронировать дату</button>
+            <button class="btn btn-primary submit" id="submitBtn" type="submit" disabled>Забронировать дату и открыть Telegram ↗</button>
           </form>
 
           <aside class="aside">
@@ -551,6 +531,6 @@
       anonKey: "sb_publishable_IaNqi5idKSJYHqfWWA9AGA_FDyyJaFu"
     };
   </script>
-  <script src="script.js?v=8"></script>
+  <script src="script.js?v=5"></script>
 </body>
 </html>
