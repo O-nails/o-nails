@@ -2,8 +2,9 @@
   "use strict";
 
   const CFG = window.ONAILES_SUPABASE || {};
-  const SUPABASE_URL = String(CFG.url || "").replace(/\/$/, "");
-  const SUPABASE_KEY = String(CFG.anonKey || "");
+  const SUPABASE_URL = CFG.url || "";
+  const SUPABASE_KEY = CFG.anonKey || "";
+  const FUNCTION_NAME = "send-booking-telegram";
 
   const form = document.getElementById("bookingForm");
   const calendar = document.getElementById("calendar");
@@ -14,7 +15,11 @@
   const summaryDate = document.getElementById("summaryDate");
   const summaryLength = document.getElementById("summaryLength");
   const nameInput = document.getElementById("name");
-  const telegramUsernameInput = document.getElementById("telegramUsername");
+
+  if (!form || !calendar || !dateInput) {
+    console.error("O.nails: booking form elements are missing.");
+    return;
+  }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -22,6 +27,7 @@
   let view = new Date(today.getFullYear(), today.getMonth(), 1);
   let booked = new Set();
   let ready = false;
+  let sending = false;
 
   const prices = {
     "1–2": "1 300 ₽",
@@ -30,33 +36,60 @@
     "8+": "2 000 ₽"
   };
 
-  function isConfigured() {
-    return Boolean(
-      SUPABASE_URL &&
-      SUPABASE_KEY &&
-      !SUPABASE_URL.includes("PASTE_YOUR") &&
-      !SUPABASE_KEY.includes("PASTE_YOUR")
-    );
-  }
+  // The current index.html may not yet contain the Telegram username field.
+  // Create it automatically so index.html does not need another manual edit.
+  let telegramInput = document.getElementById("telegram_username");
 
-  async function api(path, options = {}) {
-    if (!isConfigured()) {
-      const error = new Error("Supabase не настроен.");
-      error.status = 0;
-      throw error;
+  if (!telegramInput && nameInput) {
+    const row = document.createElement("div");
+    row.className = "form-row";
+    row.innerHTML = `
+      <div class="num">02</div>
+      <div>
+        <label class="label" for="telegram_username">Ваш Telegram</label>
+        <input
+          class="field"
+          id="telegram_username"
+          name="telegram_username"
+          type="text"
+          autocomplete="off"
+          placeholder="@username"
+          maxlength="64"
+        >
+        <small style="display:block;margin-top:7px;color:#a18791;font-size:10px;">
+          Например: @skyezq
+        </small>
+      </div>
+    `;
+
+    const firstRow = nameInput.closest(".form-row");
+    if (firstRow) {
+      firstRow.insertAdjacentElement("afterend", row);
+    } else {
+      form.prepend(row);
     }
 
+    telegramInput = row.querySelector("#telegram_username");
+  }
+
+  function isConfigured() {
+    return Boolean(SUPABASE_URL && SUPABASE_KEY);
+  }
+
+  async function supabaseFetch(path, options = {}) {
     const response = await fetch(SUPABASE_URL + path, {
       ...options,
       headers: {
         apikey: SUPABASE_KEY,
         Authorization: "Bearer " + SUPABASE_KEY,
+        "Content-Type": "application/json",
         ...(options.headers || {})
       }
     });
 
     const text = await response.text();
     let data = null;
+
     try {
       data = text ? JSON.parse(text) : null;
     } catch {
@@ -64,26 +97,28 @@
     }
 
     if (!response.ok) {
-      const message =
+      throw new Error(
         data?.message ||
         data?.hint ||
-        data?.details ||
         data?.error_description ||
         text ||
-        "Ошибка Supabase";
-      const error = new Error(message);
-      error.status = response.status;
-      throw error;
+        `Supabase HTTP ${response.status}`
+      );
     }
 
     return data;
   }
 
   function iso(date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0")
+    ].join("-");
   }
 
   function fmt(value) {
+    if (!value) return "";
     const [y, m, d] = value.split("-");
     return `${d}.${m}.${y}`;
   }
@@ -111,93 +146,105 @@
   function monthName(date) {
     return date
       .toLocaleDateString("ru-RU", { month: "long", year: "numeric" })
-      .replace(/^./, char => char.toUpperCase());
+      .replace(/^./, c => c.toUpperCase());
   }
 
   function updateSummary() {
-    if (!summaryDate || !summaryLength) return;
-    summaryDate.textContent = dateInput?.value
-      ? `${fmt(dateInput.value)} · 16:00`
-      : "не выбрана";
-    const selected = document.querySelector('input[name="length"]:checked')?.value;
-    summaryLength.textContent = selected
-      ? `${selected} · ${prices[selected]}`
-      : "не выбрана";
-  }
+    if (summaryDate) {
+      summaryDate.textContent = dateInput.value
+        ? `${fmt(dateInput.value)} · 16:00`
+        : "не выбрана";
+    }
 
-  function selectLength(value, shouldScroll = false) {
-    const input = Array.from(document.querySelectorAll('input[name="length"]'))
-      .find(item => item.value === value);
-    if (!input) return;
-    input.checked = true;
-    updateSummary();
-    if (shouldScroll) {
-      document.getElementById("booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const selected = document.querySelector('input[name="length"]:checked')?.value;
+
+    if (summaryLength) {
+      summaryLength.textContent = selected
+        ? `${selected} · ${prices[selected] || ""}`
+        : "не выбрана";
     }
   }
 
-  function renderCalendar() {
-    if (!calendar || !dateInput) return;
+  function updateSubmitState() {
+    if (!submit) return;
 
-    const year = view.getFullYear();
-    const month = view.getMonth();
-    const first = new Date(year, month, 1);
+    const length = document.querySelector('input[name="length"]:checked')?.value;
+    submit.disabled = !(
+      ready &&
+      !sending &&
+      nameInput?.value.trim() &&
+      dateInput.value &&
+      length
+    );
+  }
+
+  function render() {
+    const y = view.getFullYear();
+    const m = view.getMonth();
+
+    const first = new Date(y, m, 1);
     const offset = (first.getDay() + 6) % 7;
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const minMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const days = new Date(y, m + 1, 0).getDate();
+
+    const minMonth = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      1
+    );
+
     const canPrev = view > minMonth;
 
     let html = `
-      <div class="cal-top">
-        <div class="cal-title">${monthName(view)}</div>
-        <div class="cal-nav">
-          <button type="button" id="prevMonth" ${canPrev ? "" : "disabled"} aria-label="Предыдущий месяц">‹</button>
-          <button type="button" id="nextMonth" aria-label="Следующий месяц">›</button>
+      <div class="calhead">
+        <strong>${monthName(view)}</strong>
+        <div class="calnav">
+          <button type="button" id="prev" ${canPrev ? "" : "disabled"}>‹</button>
+          <button type="button" id="next">›</button>
         </div>
       </div>
-      <div class="week"><div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div></div>
-      <div class="days">`;
+      <div class="week">
+        <div>Пн</div><div>Вт</div><div>Ср</div>
+        <div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+      </div>
+      <div class="days">
+    `;
 
     for (let i = 0; i < offset; i++) {
-      html += '<button class="day mutedday" type="button" tabindex="-1" aria-hidden="true"></button>';
+      html += '<button class="day mutedday" type="button" tabindex="-1"></button>';
     }
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const value = iso(date);
-      const weekend = isWeekend(date);
-      const past = isPast(date);
-      const busy = booked.has(value);
+    for (let day = 1; day <= days; day++) {
+      const d = new Date(y, m, day);
+      const value = iso(d);
+      const weekend = isWeekend(d);
+      const past = isPast(d);
+      const isBooked = booked.has(value);
       const selected = dateInput.value === value;
-      const disabled = !ready || weekend || past || busy;
+      const disabled = !ready || weekend || past || isBooked;
 
-      const classes = [
-        "day",
-        weekend ? "weekend" : "",
-        busy ? "booked" : "",
-        selected ? "selected" : ""
-      ].filter(Boolean).join(" ");
-
-      let label = `${day}`;
-      if (busy) label += " — занято";
-      else if (weekend) label += " — выходной";
-      else if (past) label += " — прошедшая дата";
-
-      html += `<button class="${classes}" type="button" data-date="${value}" ${disabled ? "disabled" : ""} aria-label="${label}">${day}</button>`;
+      html += `
+        <button
+          class="day ${weekend ? "weekend " : ""}${isBooked ? "booked " : ""}${selected ? "selected" : ""}"
+          type="button"
+          data-date="${value}"
+          ${disabled ? "disabled" : ""}
+        >${day}</button>
+      `;
     }
 
     html += "</div>";
     calendar.innerHTML = html;
 
-    calendar.querySelector("#prevMonth")?.addEventListener("click", () => {
-      if (!canPrev) return;
-      view = new Date(year, month - 1, 1);
-      renderCalendar();
+    calendar.querySelector("#prev")?.addEventListener("click", () => {
+      if (canPrev) {
+        view = new Date(y, m - 1, 1);
+        render();
+      }
     });
 
-    calendar.querySelector("#nextMonth")?.addEventListener("click", () => {
-      view = new Date(year, month + 1, 1);
-      renderCalendar();
+    calendar.querySelector("#next")?.addEventListener("click", () => {
+      view = new Date(y, m + 1, 1);
+      render();
     });
 
     calendar.querySelectorAll("[data-date]").forEach(button => {
@@ -207,196 +254,214 @@
 
   function selectDate(value) {
     const date = new Date(value + "T00:00:00");
-    if (!ready || isWeekend(date) || isPast(date) || booked.has(value)) return;
+
+    if (!ready || isWeekend(date) || isPast(date) || booked.has(value)) {
+      return;
+    }
 
     dateInput.value = value;
-    renderCalendar();
-    updateSummary();
+    render();
     setDateMessage(`Выбрано: ${fmt(value)} · 16:00`, "free");
     setStatus("", "");
+    updateSummary();
+    updateSubmitState();
   }
 
-  async function loadBookings() {
-    renderCalendar();
-    updateSummary();
+  async function loadBookedDates() {
+    render();
 
     if (!isConfigured()) {
-      ready = false;
-      if (submit) submit.disabled = true;
       setDateMessage("Нет подключения к Supabase.", "error");
+      updateSubmitState();
       return;
     }
 
     setDateMessage("Проверяем свободные даты…", "info");
 
     try {
-      const rows = await api("/rest/v1/booked_dates?select=booking_date,status");
+      const rows = await supabaseFetch(
+        "/rest/v1/booked_dates?select=booking_date,status"
+      );
+
       booked = new Set(
         (rows || [])
           .filter(row => row.status === "confirmed")
           .map(row => row.booking_date)
       );
+
       ready = true;
-      if (submit) submit.disabled = false;
-      setDateMessage("Свободные будни загружены.", "free");
-      renderCalendar();
+      render();
+      setDateMessage("Выберите свободную дату · 16:00", "info");
+      updateSubmitState();
     } catch (error) {
-      console.error("ОШИБКА КАЛЕНДАРЯ:", error);
+      console.error("O.nails calendar error:", error);
       ready = false;
-      if (submit) submit.disabled = true;
-      setDateMessage("Не удалось загрузить свободные даты. Проверьте подключение Supabase.", "error");
-      renderCalendar();
+      render();
+      setDateMessage("Не удалось загрузить свободные даты.", "error");
+      setStatus("Проверьте подключение Supabase.", "error");
+      updateSubmitState();
     }
   }
 
   function normalizeTelegramUsername(value) {
-    const clean = String(value || "").trim();
-    if (!clean) return "не указан";
-    return clean.startsWith("@") ? clean : "@" + clean;
+    let username = (value || "").trim();
+    if (!username) return "";
+    if (!username.startsWith("@")) username = "@" + username;
+    return username;
   }
 
-  function buildTelegramText({ name, telegramUsername, date, length, design, removal, correction, comment }) {
-    return [
-      "Здравствуйте! Хочу записаться на маникюр 💗",
-      "",
-      `Имя: ${name}`,
-      `Telegram: ${normalizeTelegramUsername(telegramUsername)}`,
-      `Дата: ${fmt(date)}`,
-      "Время: 16:00",
-      `Длина: ${length}`,
-      `Дизайн: ${design}`,
-      `Снятие: ${removal ? "да" : "нет"}`,
-      `Коррекция: ${correction ? "да" : "нет"}`,
-      `Комментарий: ${comment}`,
-      "",
-      "Дата уже забронирована через сайт O.nails."
-    ].join("\n");
+  async function sendBookingToFunction(payload) {
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/${FUNCTION_NAME}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + SUPABASE_KEY
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    const text = await response.text();
+    let data = null;
+
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok || data?.ok === false) {
+      throw new Error(
+        data?.error ||
+        data?.message ||
+        text ||
+        `Edge Function HTTP ${response.status}`
+      );
+    }
+
+    return data;
   }
 
-  if (form) {
-    form.addEventListener("submit", async event => {
-      event.preventDefault();
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
 
-      if (!ready) {
-        setStatus("Система бронирования пока не подключена.", "err");
-        return;
+    if (sending) return;
+
+    const name = nameInput?.value.trim() || "";
+    const telegramUsername = normalizeTelegramUsername(
+      telegramInput?.value || ""
+    );
+    const bookingDate = dateInput.value;
+    const nailLength =
+      document.querySelector('input[name="length"]:checked')?.value || "";
+    const design = document.getElementById("design")?.value.trim() || "";
+    const removal = Boolean(document.getElementById("removal")?.checked);
+    const correction = Boolean(document.getElementById("correction")?.checked);
+    const comment = document.getElementById("comment")?.value.trim() || "";
+
+    if (!name) {
+      setStatus("Введите имя.", "error");
+      nameInput?.focus();
+      return;
+    }
+
+    if (!bookingDate) {
+      setStatus("Выберите дату.", "error");
+      return;
+    }
+
+    if (!nailLength) {
+      setStatus("Выберите длину ногтей.", "error");
+      return;
+    }
+
+    if (booked.has(bookingDate)) {
+      setStatus("Эта дата уже занята. Выберите другую.", "error");
+      await loadBookedDates();
+      return;
+    }
+
+    if (!isConfigured()) {
+      setStatus("Нет подключения к Supabase.", "error");
+      return;
+    }
+
+    sending = true;
+    updateSubmitState();
+    setStatus("Сохраняем бронь и отправляем сообщение в Telegram…", "info");
+
+    const payload = {
+      name,
+      telegram_username: telegramUsername,
+      booking_date: bookingDate,
+      booking_time: "16:00",
+      nail_length: nailLength,
+      design,
+      removal,
+      correction,
+      comment
+    };
+
+    try {
+      const result = await sendBookingToFunction(payload);
+
+      booked.add(bookingDate);
+      render();
+
+      setStatus(
+        result?.telegram_sent
+          ? "Бронь успешно создана 💗 Сообщение автоматически отправлено в Telegram."
+          : "Бронь успешно создана 💗",
+        "success"
+      );
+
+      setDateMessage(`Дата забронирована: ${fmt(bookingDate)} · 16:00`, "busy");
+
+      form.reset();
+      dateInput.value = "";
+      updateSummary();
+      updateSubmitState();
+
+      // Keep the selected date unavailable after reset.
+      render();
+    } catch (error) {
+      console.error("O.nails booking error:", error);
+
+      const message = String(error?.message || error);
+
+      if (message.includes("Эта дата уже занята")) {
+        booked.add(bookingDate);
+        render();
+        setStatus("Эта дата уже занята. Выберите другую.", "error");
+      } else {
+        setStatus(
+          "Не получилось сохранить бронь или отправить сообщение в Telegram: " +
+          message,
+          "error"
+        );
       }
-
-      const name = nameInput?.value.trim() || "";
-      const telegramUsername = telegramUsernameInput?.value.trim() || "";
-      const date = dateInput?.value || "";
-      const length = document.querySelector('input[name="length"]:checked')?.value || "";
-      const design = document.getElementById("design")?.value.trim() || "пришлю фото / обсудим";
-      const removal = Boolean(document.getElementById("removal")?.checked);
-      const correction = Boolean(document.getElementById("correction")?.checked);
-      const comment = document.getElementById("comment")?.value.trim() || "нет";
-
-      if (!name) {
-        setStatus("Введите имя.", "err");
-        nameInput?.focus();
-        return;
-      }
-
-      if (!date || !length) {
-        setStatus("Выберите дату и длину ногтей.", "err");
-        return;
-      }
-
-      const dateObject = new Date(date + "T00:00:00");
-
-      if (isWeekend(dateObject)) {
-        setDateMessage("Суббота и воскресенье недоступны.", "busy");
-        return;
-      }
-
-      if (booked.has(date)) {
-        setDateMessage("Эта дата уже занята.", "busy");
-        renderCalendar();
-        return;
-      }
-
-      submit.disabled = true;
-      submit.textContent = "Бронируем…";
-      setStatus("Проверяем дату и сохраняем запись…", "info");
-
-      try {
-        await api("/rest/v1/rpc/create_booking", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            p_name: name,
-            p_booking_date: date,
-            p_booking_time: "16:00",
-            p_nail_length: length,
-            p_design: design,
-            p_removal: removal,
-            p_correction: correction,
-            p_comment: comment
-          })
-        });
-
-        booked.add(date);
-        renderCalendar();
-        updateSummary();
-        setDateMessage(`Дата ${fmt(date)} забронирована · 16:00`, "free");
-        setStatus("Готово! Дата закреплена. Сейчас откроется Telegram.", "ok");
-
-        const telegramText = buildTelegramText({
-          name,
-          telegramUsername,
-          date,
-          length,
-          design,
-          removal,
-          correction,
-          comment
-        });
-
-        // Безопасно используем встроенный конструктор URL, не создавая
-        // локальную переменную с именем URL.
-        const telegramUrl = new globalThis.URL("https://t.me/olkadolka228");
-        telegramUrl.searchParams.set("text", telegramText);
-
-        setTimeout(() => {
-          window.location.assign(telegramUrl.toString());
-        }, 250);
-      } catch (error) {
-        console.error("ОШИБКА БРОНИ:", error);
-
-        const message = String(error?.message || "");
-        const isBusyDate =
-          error?.status === 409 ||
-          /дата уже занята|already exists|duplicate|unique/i.test(message);
-
-        if (isBusyDate) {
-          booked.add(date);
-          dateInput.value = "";
-          renderCalendar();
-          updateSummary();
-          setDateMessage("Эту дату только что забронировала другая клиентка. Выберите другую.", "busy");
-          setStatus("Бронь не создана: дата уже занята.", "err");
-        } else {
-          const details = message ? ` (${message})` : "";
-          setStatus(`Не получилось сохранить бронь.${details}`, "err");
-        }
-      } finally {
-        submit.disabled = !ready;
-        submit.textContent = "Забронировать дату и открыть Telegram ↗";
-      }
-    });
-  }
-
-  document.querySelectorAll('input[name="length"]').forEach(input => {
-    input.addEventListener("change", updateSummary);
+    } finally {
+      sending = false;
+      updateSubmitState();
+    }
   });
 
-  document.querySelectorAll(".price-action[data-length]").forEach(button => {
-    button.addEventListener("click", () => selectLength(button.dataset.length, true));
+  nameInput?.addEventListener("input", updateSubmitState);
+  telegramInput?.addEventListener("input", () => {
+    telegramInput.value = telegramInput.value.replace(/\s/g, "");
   });
 
-  // All page sections are visible by default; this class is only a marker now.
-  document.querySelectorAll(".reveal").forEach(el => el.classList.add("is-visible"));
+  form.addEventListener("change", event => {
+    if (event.target.matches('input[name="length"]')) {
+      updateSummary();
+      updateSubmitState();
+    }
+  });
 
   updateSummary();
-  loadBookings();
+  updateSubmitState();
+  loadBookedDates();
 })();
