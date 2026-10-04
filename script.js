@@ -255,9 +255,7 @@
   comment
 });
 
-const telegramUrl =
-  `https://t.me/olkadolka228?text=${encodeURIComponent(telegramText)}`;
-
+const telegramUrl = `https://t.me/olkadolka228?text=${encodeURIComponent(telegramText)}`;
 window.location.href = telegramUrl;
     } catch (error) {
       console.error("O.nails / Supabase booking error:", error);
