@@ -1,3 +1,25 @@
+/* O.nails — add this to your existing script.js.
+   It reads Telegram data from the personalized bot link:
+   https://o-nails.github.io/o-nails/?tg_id=123&tg_username=%40name
+*/
+
+// Put near the top of your existing script.js:
+const ONAILS_TELEGRAM_PARAMS = new URLSearchParams(window.location.search);
+
+const ONAILS_TELEGRAM_CHAT_ID =
+  ONAILS_TELEGRAM_PARAMS.get("tg_id") || "";
+
+const ONAILS_TELEGRAM_USERNAME =
+  ONAILS_TELEGRAM_PARAMS.get("tg_username") || "";
+
+// Then, inside the JSON body sent to
+// /functions/v1/send-booking-telegram, add:
+//
+// telegram_username: ONAILS_TELEGRAM_USERNAME || telegramUsernameFromYourForm,
+// telegram_chat_id: ONAILS_TELEGRAM_CHAT_ID || null,
+//
+// If your form already has a Telegram username field, use its value
+// as telegram_username. Do NOT remove the existing field.
 (() => {
   "use strict";
 
