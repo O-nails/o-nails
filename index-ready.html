@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#fff4f7">
+  <meta name="description" content="O.nails — маникюр, дизайн и уход. Онлайн-запись на будние дни, фиксированное время 16:00.">
+  <title>O.nails — красивый маникюр начинается здесь</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#fff8fb;
+      --bg-2:#fff1f5;
+      --surface:rgba(255,255,255,.84);
+      --surface-strong:#fff;
+      --ink:#2a171f;
+      --muted:#806b73;
+      --rose:#8f234d;
+      --rose-2:#b6436d;
+      --rose-3:#efa5bd;
+      --rose-4:#fde0ea;
+      --blush:#f7c3d4;
+      --line:#ecd4dc;
+      --dark:#2d1921;
+      --good:#39704a;
+      --bad:#a43d4c;
+      --info:#8e692b;
+      --shadow:0 24px 60px rgba(87,25,49,.12);
+      --shadow-soft:0 14px 34px rgba(87,25,49,.08);
+      --radius:30px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      color:var(--ink);
+      font-family:"Manrope",sans-serif;
+      background:
+        radial-gradient(circle at 3% 0%,rgba(244,169,195,.45),transparent 22%),
+        radial-gradient(circle at 95% 27%,rgba(224,123,161,.16),transparent 19%),
+        linear-gradient(180deg,#fffafd 0%,#fff5f8 48%,#fffafc 100%);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-2;
+      opacity:.22;
+      pointer-events:none;
+      background-image:radial-gradient(rgba(143,35,77,.13) .7px,transparent .7px);
+      background-size:10px 10px;
+      mask-image:linear-gradient(180deg,#000,transparent 80%);
+    }
+    body::after{
+      content:"";
+      position:fixed;
+      width:260px;height:260px;
+      left:-160px;bottom:10%;
+      border-radius:50%;
+      border:1px solid rgba(143,35,77,.08);
+      box-shadow:0 0 0 26px rgba(255,255,255,.4),0 0 0 52px rgba(143,35,77,.04);
+      pointer-events:none;
+      z-index:-1;
+    }
+    img{max-width:100%}
+    a{text-decoration:none;color:inherit}
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+
+    .shell{width:min(1160px,calc(100% - 34px));margin:0 auto}
+    .header{
+      position:sticky;top:0;z-index:50;
+      border-bottom:1px solid rgba(236,212,220,.82);
+      background:rgba(255,250,252,.8);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+    }
+    .nav{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{display:flex;align-items:center;gap:11px;font-weight:800}
+    .brand-mark{
+      width:39px;height:39px;display:grid;place-items:center;border-radius:50%;
+      background:#fff;border:1px solid var(--line);color:var(--rose);font-size:20px;
+      box-shadow:0 9px 20px rgba(143,35,77,.09)
+    }
+    .brand-name{font-size:20px;letter-spacing:-.04em}
+    .navlinks{display:flex;gap:30px;color:var(--muted);font-size:12px;font-weight:700}
+    .navlinks a{padding:10px 0;position:relative}
+    .navlinks a::after{content:"";position:absolute;left:0;right:100%;bottom:3px;height:1px;background:var(--rose);transition:right .22s ease}
+    .navlinks a:hover{color:var(--rose)}
+    .navlinks a:hover::after{right:0}
+    .nav-cta,.btn-primary{
+      color:#fff;background:var(--rose);border:0;box-shadow:0 13px 28px rgba(143,35,77,.18)
+    }
+    .nav-cta{padding:13px 18px;border-radius:999px;font-size:12px;font-weight:800}
+    .nav-cta:hover,.btn-primary:hover{transform:translateY(-1px);box-shadow:0 17px 34px rgba(143,35,77,.23)}
+
+    .top-note{
+      display:flex;align-items:center;justify-content:center;gap:12px;
+      padding:8px 14px;background:rgba(253,224,234,.65);border-bottom:1px solid rgba(236,212,220,.7);
+      color:var(--rose);font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase
+    }
+    .top-note span{opacity:.5}
+
+    .hero{display:grid;grid-template-columns:minmax(0,1.03fr) minmax(380px,470px);gap:72px;align-items:center;padding:72px 0 88px}
+    .eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--rose-2);font-weight:800}
+    .hero h1{margin:18px 0 24px;font:700 clamp(62px,8vw,104px)/.8 "Cormorant Garamond",serif;letter-spacing:-.06em}
+    .hero h1 em{font-style:italic;color:var(--rose)}
+    .hero-copy{max-width:610px;margin:0;color:var(--muted);font-size:15px;line-height:1.9}
+    .hero-actions{display:flex;gap:11px;flex-wrap:wrap;margin-top:30px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:14px 20px;border-radius:999px;font-size:12px;font-weight:800;transition:.2s ease}
+    .btn-ghost{border:1px solid var(--line);background:rgba(255,255,255,.7)}
+    .btn-ghost:hover{background:#fff;border-color:#d9afbe;transform:translateY(-1px)}
+    .hero-notes{display:flex;flex-wrap:wrap;gap:8px;margin-top:25px}
+    .note{padding:10px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.66);color:var(--muted);font-size:9px;font-weight:700}
+    .note strong{color:var(--rose)}
+
+    .hero-visual{position:relative}
+    .hero-visual::before{content:"";position:absolute;inset:26px -22px -22px 18px;border-radius:40px;background:linear-gradient(135deg,rgba(240,166,191,.72),rgba(255,231,239,.15));transform:rotate(5deg)}
+    .hero-visual::after{content:"";position:absolute;width:92px;height:92px;right:-24px;top:-20px;border:1px solid rgba(143,35,77,.18);border-radius:50%;box-shadow:inset 0 0 0 17px rgba(255,255,255,.4)}
+    .hero-frame{position:relative;padding:11px;border:1px solid rgba(255,255,255,.95);border-radius:35px;background:rgba(255,255,255,.9);box-shadow:var(--shadow);transform:rotate(-1.5deg);overflow:hidden}
+    .hero-frame img{width:100%;height:560px;display:block;object-fit:cover;object-position:center top;border-radius:27px}
+    .tag{position:absolute;left:25px;top:25px;padding:10px 13px;border-radius:14px;background:rgba(255,255,255,.9);border:1px solid #fff;box-shadow:0 12px 24px rgba(60,16,33,.08);font-size:10px;font-weight:800;color:var(--rose)}
+    .price-chip{position:absolute;right:20px;bottom:19px;padding:13px 15px;border-radius:18px;color:#fff;background:rgba(45,25,33,.93);box-shadow:0 16px 32px rgba(45,25,33,.2)}
+    .price-chip span{display:block;color:#efd7df;font-size:8px;letter-spacing:.16em;text-transform:uppercase}
+    .price-chip strong{display:block;margin-top:2px;font:700 25px/1 "Cormorant Garamond",serif}
+
+    .section{padding:84px 0}
+    .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:28px;margin-bottom:32px}
+    .section-head h2{margin:9px 0 0;font:700 58px/.9 "Cormorant Garamond",serif;letter-spacing:-.04em}
+    .section-head p{max-width:430px;margin:0;color:var(--muted);font-size:12px;line-height:1.8}
+
+    .price-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+    .price-card{
+      position:relative;min-height:220px;padding:25px;border-radius:26px;border:1px solid var(--line);
+      background:rgba(255,255,255,.74);box-shadow:var(--shadow-soft);overflow:hidden;transition:.25s ease
+    }
+    .price-card::after{content:"";position:absolute;right:-58px;top:-58px;width:140px;height:140px;border-radius:50%;background:rgba(247,194,211,.33)}
+    .price-card:hover{transform:translateY(-5px);box-shadow:0 22px 38px rgba(87,25,49,.12)}
+    .price-card:focus-within{outline:3px solid rgba(182,67,109,.12)}
+    .card-num{position:relative;z-index:1;color:#ad8291;font-size:9px;font-weight:800;letter-spacing:.12em}
+    .price-card h3{position:relative;z-index:1;margin:31px 0 6px;font:700 31px/.93 "Cormorant Garamond",serif}
+    .price-card p{margin:0;max-width:175px;color:var(--muted);font-size:10px;line-height:1.55}
+    .price-value{position:absolute;left:25px;bottom:23px;color:var(--rose);font:700 32px/1 "Cormorant Garamond",serif}
+    .price-action{position:absolute;right:18px;bottom:18px;border:0;background:#fff7fa;color:var(--rose);border:1px solid var(--line);border-radius:999px;padding:8px 10px;font-size:9px;font-weight:800;transition:.2s ease}
+    .price-action:hover{background:var(--rose);color:#fff;border-color:var(--rose)}
+    .extra-list{display:grid;gap:10px;margin-top:14px}
+    .extra{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:12px;padding:16px 17px;border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.62)}
+    .extra-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:var(--rose-4);color:var(--rose);font-size:14px}
+    .extra-title{font-size:12px;font-weight:800}
+    .extra-sub{display:block;margin-top:3px;color:var(--muted);font-size:9px}
+    .extra-value{font:700 24px/1 "Cormorant Garamond",serif;color:var(--rose);white-space:nowrap}
+
+    .booking-wrap{padding:88px 0;background:rgba(250,236,241,.5);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .booking-grid{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:17px;align-items:start}
+    .form-card{background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:32px;padding:25px;box-shadow:var(--shadow)}
+    .form-row{display:grid;grid-template-columns:42px minmax(0,1fr);gap:15px;padding:18px 0;border-bottom:1px solid var(--line)}
+    .form-row:last-of-type{border-bottom:0}
+    .num{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:var(--rose-4);color:var(--rose);font-size:9px;font-weight:800}
+    .label{display:block;margin:1px 0 9px;font-size:11px;font-weight:800}
+    .field,textarea{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:15px;background:#fff;color:var(--ink);outline:none;transition:.2s ease}
+    .field-note{margin-top:7px;color:var(--muted);font-size:8px;line-height:1.45}
+    .field::placeholder,textarea::placeholder{color:#b39da4}
+    .field:focus,textarea:focus{border-color:#bb4b75;box-shadow:0 0 0 4px rgba(246,178,200,.28)}
+    textarea{min-height:96px;resize:vertical}
+
+    .calendar{padding:14px;border:1px solid var(--line);border-radius:20px;background:#fff}
+    .cal-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+    .cal-title{font:700 27px/1 "Cormorant Garamond",serif}
+    .cal-nav{display:flex;gap:6px}
+    .cal-nav button{width:32px;height:32px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:18px;line-height:1}
+    .cal-nav button:hover:not(:disabled){background:var(--rose-4);color:var(--rose)}
+    .cal-nav button:disabled{opacity:.35;cursor:not-allowed}
+    .week,.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+    .week div{text-align:center;color:#aa8b96;font-size:8px;padding:4px 0;font-weight:800}
+    .day{height:39px;border:0;border-radius:11px;background:#fff;color:var(--ink);font-size:11px;font-weight:800;transition:.15s ease}
+    .day:hover:not(:disabled){background:#fde7ee;color:var(--rose);transform:translateY(-1px)}
+    .day.weekend{background:#f8f0f3;color:#c4aab3}
+    .day.booked{background:#eee2e7;color:#b8a5ad;text-decoration:line-through}
+    .day.selected{background:var(--rose);color:#fff;box-shadow:0 9px 16px rgba(143,35,77,.2)}
+    .day:disabled{cursor:not-allowed}
+    .mutedday{visibility:hidden}
+    .date-status{display:block;margin-top:9px;font-size:9px;color:var(--muted);min-height:14px}
+    .date-status.free{color:var(--good)}
+    .date-status.busy,.date-status.error{color:var(--bad)}
+    .date-status.info{color:var(--info)}
+
+    .timebox{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px;border-radius:16px;background:linear-gradient(135deg,#fde0ea,#fff);border:1px solid var(--line)}
+    .timebox strong{font:700 31px/1 "Cormorant Garamond",serif;color:var(--rose)}
+    .timebox span{color:var(--muted);font-size:9px;font-weight:700}
+
+    .length-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .choice input,.check input{position:absolute;opacity:0;pointer-events:none}
+    .choice span{display:block;padding:12px 8px;border:1px solid var(--line);border-radius:14px;background:#fff;text-align:center;font-size:11px;font-weight:800;transition:.15s ease}
+    .choice span small{display:block;margin-top:4px;color:var(--muted);font-size:9px;font-weight:600}
+    .choice span:hover{border-color:#d9afbe}
+    .choice input:checked+span{border-color:var(--rose);background:var(--rose-4);color:var(--rose);box-shadow:0 6px 14px rgba(143,35,77,.08)}
+    .choice input:checked+span small{color:var(--rose-2)}
+    .check-grid{display:flex;flex-wrap:wrap;gap:8px}
+    .check span{display:block;padding:11px 13px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:10px;font-weight:700;transition:.15s ease}
+    .check span:hover{border-color:#d9afbe}
+    .check input:checked+span{border-color:var(--rose);background:var(--rose-4);color:var(--rose)}
+
+    .booking-summary{margin-top:15px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .summary-item{padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff8fa}
+    .summary-item small{display:block;color:#a0848f;font-size:8px;text-transform:uppercase;letter-spacing:.13em;font-weight:800}
+    .summary-item strong{display:block;margin-top:4px;font-size:11px;overflow-wrap:anywhere}
+
+    .status{display:none;margin-top:14px;padding:13px 14px;border-radius:14px;font-size:10px;line-height:1.55}
+    .status.show{display:block}
+    .status.ok{background:#eef8f0;color:var(--good)}
+    .status.err{background:#fff0f2;color:var(--bad)}
+    .status.info{background:#fff9e9;color:var(--info)}
+    .submit{width:100%;margin-top:6px;padding:16px 18px}
+    .submit:disabled{opacity:.55;cursor:not-allowed;transform:none!important}
+
+    .aside{display:grid;gap:12px}
+    .tg-card{position:relative;overflow:hidden;min-height:332px;padding:27px;border-radius:31px;background:var(--dark);color:#fff;box-shadow:var(--shadow)}
+    .tg-card::before{content:"♡";position:absolute;right:-12px;top:-43px;color:rgba(255,255,255,.06);font:700 220px/.8 "Cormorant Garamond",serif;transform:rotate(-16deg)}
+    .tg-card .eyebrow{color:#f1a6bd}
+    .tg-card h3{position:relative;margin:10px 0 14px;font:700 48px/.88 "Cormorant Garamond",serif;letter-spacing:-.025em}
+    .tg-card p{position:relative;max-width:285px;margin:0;color:#ead9df;font-size:10px;line-height:1.8}
+    .tg-handle{display:inline-flex;align-items:center;gap:7px;margin-top:20px;padding:12px 14px;border-radius:999px;background:#fff;color:var(--ink);font-size:10px;font-weight:800}
+    .booking-side-note{padding:19px;border-radius:23px;border:1px solid var(--line);background:rgba(255,255,255,.78);color:var(--muted);font-size:10px;line-height:1.75}
+    .booking-side-note strong{color:var(--ink)}
+    .tiny-list{display:grid;gap:9px;margin-top:13px}
+    .tiny-list div{display:flex;align-items:flex-start;gap:8px}
+    .tiny-list b{color:var(--rose)}
+
+    .visit-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+    .visit-card{padding:25px;border:1px solid var(--line);border-radius:25px;background:rgba(255,255,255,.7);transition:.22s ease}
+    .visit-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-soft)}
+    .visit-num{color:#ad8291;font-size:9px;font-weight:800;letter-spacing:.13em}
+    .visit-card h3{margin:33px 0 8px;font:700 30px/.94 "Cormorant Garamond",serif}
+    .visit-card p{margin:0;color:var(--muted);font-size:10px;line-height:1.72}
+
+    .quote{padding:85px 0 96px}
+    .quote-inner{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .quote-card,.manifest{border:1px solid var(--line);border-radius:31px}
+    .quote-card{padding:37px;background:linear-gradient(135deg,#fff,#fde9f0);box-shadow:var(--shadow-soft)}
+    .quote-card p{margin:0;font:600 43px/1.02 "Cormorant Garamond",serif;letter-spacing:-.025em}
+    .quote-card span{display:block;margin-top:20px;color:var(--muted);font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:800}
+    .manifest{display:flex;flex-direction:column;justify-content:center;padding:37px;background:#fff}
+    .manifest h3{margin:0 0 12px;font:700 34px/.95 "Cormorant Garamond",serif}
+    .manifest p{margin:0;color:var(--muted);font-size:10px;line-height:1.8}
+    .manifest .line{width:125px;height:1px;margin:18px 0;background:var(--rose)}
+
+    .footer{padding:29px 0 44px;border-top:1px solid var(--line)}
+    .foot{display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .foot-brand{font-weight:800}
+    .foot small{display:block;margin-top:4px;color:var(--muted);font-size:9px}
+    .foot-link{font-size:10px;font-weight:800;color:var(--rose)}
+    .mobile-bar{display:none}
+    .reveal{opacity:1;transform:none;transition:opacity .65s ease,transform .65s ease}
+    .reveal.is-visible{opacity:1;transform:none}
+    @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}
+
+    @media (max-width:980px){
+      .hero{grid-template-columns:1fr;gap:42px;padding-top:54px}
+      .hero-visual{max-width:575px;width:100%;margin:0 auto}
+      .price-grid{grid-template-columns:repeat(2,1fr)}
+      .booking-grid{grid-template-columns:1fr}
+      .aside{grid-template-columns:1fr 1fr}
+      .visit-grid{grid-template-columns:repeat(2,1fr)}
+      .quote-inner{grid-template-columns:1fr}
+      .navlinks{display:none}
+    }
+
+    @media (max-width:640px){
+      .shell{width:calc(100% - 20px)}
+      .top-note{font-size:7px;padding:7px 8px;gap:8px;letter-spacing:.08em}
+      .nav{min-height:69px}
+      .nav-cta{padding:11px 14px}
+      .hero{padding:43px 0 68px}
+      .hero h1{font-size:59px;line-height:.83}
+      .hero-copy{font-size:12.5px;line-height:1.8}
+      .hero-actions .btn{width:100%}
+      .hero-visual::after{right:0}
+      .hero-frame img{height:430px}
+      .section,.booking-wrap,.quote{padding:65px 0}
+      .section-head{display:block}
+      .section-head h2{font-size:47px;margin-bottom:14px}
+      .section-head p{font-size:10.5px}
+      .price-grid,.visit-grid{grid-template-columns:1fr}
+      .price-card{min-height:194px}
+      .extra{grid-template-columns:31px 1fr auto}
+      .extra-value{font-size:21px}
+      .form-card{padding:14px}
+      .form-row{grid-template-columns:29px minmax(0,1fr);gap:10px}
+      .length-grid{grid-template-columns:repeat(2,1fr)}
+      .booking-summary{grid-template-columns:1fr 1fr 1fr}
+      .aside{grid-template-columns:1fr}
+      .tg-card h3{font-size:42px}
+      .quote-card p{font-size:34px}
+      .foot{align-items:flex-start;flex-direction:column}
+      .mobile-bar{position:fixed;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:55;padding:7px;border-radius:19px;background:rgba(45,25,33,.95);box-shadow:0 18px 40px rgba(0,0,0,.18);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+      .mobile-bar a{min-width:0;text-align:center;padding:12px 4px;color:#fff;font-size:9px;font-weight:800;line-height:1.2;border-radius:12px;white-space:nowrap}
+      .mobile-bar a:last-child{background:#fff;color:var(--rose)}
+    }
+  </style>
+</head>
+<body>
+  <div class="top-note"><span>♡</span> Онлайн-запись • 16:00 • только будни <span>♡</span></div>
+
+  <header class="header">
+    <div class="shell nav">
+      <a class="brand" href="#top" aria-label="O.nails">
+        <span class="brand-mark">♡</span>
+        <span class="brand-name">O.nails</span>
+      </a>
+      <nav class="navlinks" aria-label="Основная навигация">
+        <a href="#prices">Цены</a>
+        <a href="#booking">Запись</a>
+        <a href="#visit">Перед визитом</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="shell hero reveal">
+      <div>
+        <div class="eyebrow">маникюр • дизайн • уход</div>
+        <h1>Ногти,<br><em>к которым</em><br>хочется возвращаться.</h1>
+        <p class="hero-copy">O.nails — спокойная эстетика, аккуратная работа и понятная онлайн-запись. Выберите свободный будний день: время каждого сеанса фиксировано на <strong>16:00</strong>.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#booking">Записаться ↗</a>
+          <a class="btn btn-ghost" href="#prices">Смотреть прайс</a>
+        </div>
+        <div class="hero-notes" aria-label="Преимущества">
+          <span class="note"><strong>♡</strong> одна запись на дату</span>
+          <span class="note"><strong>16:00</strong> фиксированное время</span>
+          <span class="note"><strong>Пн–Пт</strong> запись</span>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-frame">
+          <img src="price-menu.jpg" alt="Прайс O.nails на маникюр" loading="eager">
+          <div class="tag">♡ beauty & care</div>
+          <div class="price-chip"><span>стоимость от</span><strong>1 300 ₽</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell section reveal" id="prices">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">прайс</div>
+          <h2>Цены без сюрпризов</h2>
+        </div>
+        <p>Стоимость зависит от длины ногтей. Дизайн, ремонт и снятие считаются отдельно. Нажмите на подходящую длину — она автоматически выберется в форме записи.</p>
+      </div>
+
+      <div class="price-grid">
+        <article class="price-card"><div class="card-num">01 / КОРОТКИЕ</div><h3>Длина 1–2</h3><p>Короткие ногти</p><div class="price-value">1 300 ₽</div><button class="price-action" type="button" data-length="1–2">Выбрать</button></article>
+        <article class="price-card"><div class="card-num">02 / СРЕДНЯЯ</div><h3>Длина 3–5</h3><p>Средняя длина</p><div class="price-value">1 500 ₽</div><button class="price-action" type="button" data-length="3–5">Выбрать</button></article>
+        <article class="price-card"><div class="card-num">03 / ДЛИННЫЕ</div><h3>Длина 6–7</h3><p>Длинные ногти</p><div class="price-value">1 700 ₽</div><button class="price-action" type="button" data-length="6–7">Выбрать</button></article>
+        <article class="price-card"><div class="card-num">04 / ОЧЕНЬ ДЛИННЫЕ</div><h3>Длина 8+</h3><p>Очень длинные ногти</p><div class="price-value">2 000 ₽</div><button class="price-action" type="button" data-length="8+">Выбрать</button></article>
+      </div>
+
+      <div class="extra-list">
+        <div class="extra"><div class="extra-icon">✦</div><div><div class="extra-title">Доплата за дизайн</div><span class="extra-sub">до 300 ₽</span></div><div class="extra-value">до 300 ₽</div></div>
+        <div class="extra"><div class="extra-icon">♡</div><div><div class="extra-title">Починка одного ногтя</div><span class="extra-sub">за 1 ноготь</span></div><div class="extra-value">200 ₽</div></div>
+        <div class="extra"><div class="extra-icon">⌁</div><div><div class="extra-title">Снятие</div><span class="extra-sub">предыдущее покрытие</span></div><div class="extra-value">400 ₽</div></div>
+      </div>
+    </section>
+
+    <section class="booking-wrap reveal" id="booking">
+      <div class="shell">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">онлайн-запись</div>
+            <h2>Забронируйте свой день</h2>
+          </div>
+          <p>Выберите свободный будний день. Время — всегда 16:00. После успешной записи дата сразу становится занятой.</p>
+        </div>
+
+        <div class="booking-grid">
+          <form class="form-card" id="bookingForm" novalidate>
+            <div class="form-row">
+              <div class="num">01</div>
+              <div>
+                <label class="label" for="name">Ваше имя</label>
+                <input class="field" id="name" name="name" autocomplete="name" required placeholder="Например, Ольга">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="num">02</div>
+              <div>
+                <label class="label" for="telegramUsername">Telegram username</label>
+                <input class="field" id="telegramUsername" name="telegram_username" autocomplete="username" placeholder="Например, @username">
+                <div class="field-note">Необязательно. Укажите @username, чтобы он попал в сообщение в Telegram.</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="num">08</div>
+              <div>
+                <div class="label">Дата</div>
+                <input id="date" type="hidden" required>
+                <div class="calendar" id="calendar" aria-label="Календарь записи"></div>
+                <small id="dateStatus" class="date-status">Загрузка свободных дат…</small>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="num">03</div>
+              <div>
+                <div class="label">Время</div>
+                <div class="timebox"><strong>16:00</strong><span>фиксированное время</span></div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="num">04</div>
+              <div>
+                <div class="label">Длина ногтей</div>
+                <div class="length-grid">
+                  <label class="choice"><input type="radio" name="length" value="1–2" required><span>1–2<small>1 300 ₽</small></span></label>
+                  <label class="choice"><input type="radio" name="length" value="3–5"><span>3–5<small>1 500 ₽</small></span></label>
+                  <label class="choice"><input type="radio" name="length" value="6–7"><span>6–7<small>1 700 ₽</small></span></label>
+                  <label class="choice"><input type="radio" name="length" value="8+"><span>8+<small>2 000 ₽</small></span></label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="num">05</div>
+              <div>
+                <label class="label" for="design">Какой дизайн хотите?</label>
+                <textarea id="design" rows="3" placeholder="Опишите идею или напишите: «пришлю фото в Telegram»"></textarea>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="num">06</div>
+              <div>
+                <div class="label">Дополнительно</div>
+                <div class="check-grid">
+                  <label class="check"><input type="checkbox" id="removal"><span>Нужно снятие</span></label>
+                  <label class="check"><input type="checkbox" id="correction"><span>Нужна коррекция</span></label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="num">07</div>
+              <div>
+                <label class="label" for="comment">Пожелания</label>
+                <textarea id="comment" rows="3" placeholder="Например: ремонт одного ногтя или другие детали"></textarea>
+              </div>
+            </div>
+
+            <div class="booking-summary" aria-live="polite">
+              <div class="summary-item"><small>Дата</small><strong id="summaryDate">не выбрана</strong></div>
+              <div class="summary-item"><small>Время</small><strong>16:00</strong></div>
+              <div class="summary-item"><small>Длина</small><strong id="summaryLength">не выбрана</strong></div>
+            </div>
+
+            <div id="bookingStatus" class="status" role="status" aria-live="polite"></div>
+            <button class="btn btn-primary submit" id="submitBtn" type="submit" disabled>Забронировать дату и открыть Telegram ↗</button>
+          </form>
+
+          <aside class="aside">
+            <div class="tg-card">
+              <div class="eyebrow">telegram</div>
+              <h3>@olkadolka228</h3>
+              <p>После успешной брони откроется Telegram с готовым сообщением: имя, username, дата, 16:00, длина, дизайн и дополнительные услуги.</p>
+              <a class="tg-handle" href="https://t.me/olkadolka228" target="_blank" rel="noopener">Открыть Telegram ↗</a>
+            </div>
+            <div class="booking-side-note">
+              <strong>Как всё проходит</strong>
+              <div class="tiny-list">
+                <div><b>01</b><span>Выбираете свободную дату.</span></div>
+                <div><b>02</b><span>Указываете длину и пожелания.</span></div>
+                <div><b>03</b><span>Дата фиксируется в системе.</span></div>
+                <div><b>04</b><span>Открывается Telegram с готовым текстом.</span></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell section reveal" id="visit">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">перед визитом</div>
+          <h2>Чтобы всё прошло спокойно</h2>
+        </div>
+        <p>Небольшая подготовка помогает сохранить больше времени на красивый дизайн.</p>
+      </div>
+      <div class="visit-grid">
+        <article class="visit-card"><div class="visit-num">01</div><h3>Пришлите референс</h3><p>Фото понравившегося дизайна можно отправить в Telegram до визита.</p></article>
+        <article class="visit-card"><div class="visit-num">02</div><h3>Не забудьте снятие</h3><p>Снятие предыдущего покрытия — дополнительная услуга за 400 ₽.</p></article>
+        <article class="visit-card"><div class="visit-num">03</div><h3>Ремонт ногтя</h3><p>Починка одного ногтя — 200 ₽. Детали можно написать в пожеланиях.</p></article>
+        <article class="visit-card"><div class="visit-num">04</div><h3>Придите без спешки</h3><p>Для сложного дизайна лучше заложить небольшой запас времени.</p></article>
+      </div>
+    </section>
+
+    <section class="shell quote reveal">
+      <div class="quote-inner">
+        <div class="quote-card"><p>«Красивые ногти — это всегда хорошая идея»</p><span>O.nails · beauty & care</span></div>
+        <div class="manifest"><h3>Нежные детали.<br>Красивые руки.</h3><div class="line"></div><p>Выберите дату, заполните несколько пунктов — остальное уже собрано в одном аккуратном сообщении для Telegram.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell foot">
+      <div><div class="foot-brand">O.nails</div><small>Маникюр • дизайн • уход</small></div>
+      <a class="foot-link" href="https://t.me/olkadolka228" target="_blank" rel="noopener">@olkadolka228 ↗</a>
+    </div>
+  </footer>
+
+  <div class="mobile-bar" aria-label="Быстрая навигация">
+    <a href="#prices">Цены</a>
+    <a href="#visit">Перед визитом</a>
+    <a href="#booking">Записаться</a>
+  </div>
+
+  <script>
+    window.ONAILES_SUPABASE = {
+      url: "https://agvkksymvwsmrcxpjhts.supabase.co",
+      anonKey: "sb_publishable_IaNqi5idKSJYHqfWWA9AGA_FDyyJaFu"
+    };
+  </script>
+  <script src="script.js?v=7"></script>
+</body>
+</html>
